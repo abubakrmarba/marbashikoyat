@@ -2,143 +2,339 @@
 <html lang="uz">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <title>Anonim shikoyat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>Murojaat yuborish</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: var(--tg-theme-bg-color, #ffffff);
-      --text: var(--tg-theme-text-color, #111111);
-      --hint: var(--tg-theme-hint-color, #8a8a8a);
-      --card: var(--tg-theme-secondary-bg-color, #f2f2f5);
-      --accent: var(--tg-theme-button-color, #2481cc);
+      --bg: var(--tg-theme-secondary-bg-color, #f1f3f6);
+      --surface: var(--tg-theme-bg-color, #ffffff);
+      --text: var(--tg-theme-text-color, #0f172a);
+      --muted: var(--tg-theme-hint-color, #64748b);
+      --accent: var(--tg-theme-button-color, #1e5eff);
       --accent-text: var(--tg-theme-button-text-color, #ffffff);
+      --line: color-mix(in srgb, var(--muted) 18%, transparent);
+      --accent-soft: color-mix(in srgb, var(--accent) 10%, transparent);
+      --ok: #16a34a;
+      --danger: #dc2626;
+      --radius: 14px;
     }
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; background: var(--bg); color: var(--text); }
     body {
-      margin: 0; padding: 16px; background: var(--bg); color: var(--text);
-      font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font: 15px/1.5 "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 0 0 calc(24px + env(safe-area-inset-bottom));
+      -webkit-font-smoothing: antialiased;
     }
-    h1 { font-size: 20px; margin: 4px 0 6px; }
-    .note {
-      background: var(--card); border-radius: 12px; padding: 12px 14px;
-      font-size: 13px; color: var(--hint); margin-bottom: 18px;
+    svg { display: block; }
+
+    /* Header */
+    .hero {
+      background: var(--surface);
+      padding: 22px 18px 18px;
+      border-bottom: 1px solid var(--line);
     }
-    .note b { color: var(--text); }
-    label { display: block; font-weight: 600; margin: 14px 0 8px; font-size: 14px; }
-    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-    .chip {
-      border: 1.5px solid transparent; background: var(--card); color: var(--text);
-      padding: 8px 12px; border-radius: 20px; font-size: 14px; cursor: pointer;
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      width: 44px; height: 44px; border-radius: 12px; flex: none;
+      background: var(--accent); color: var(--accent-text);
+      display: grid; place-items: center;
     }
-    .chip.active { border-color: var(--accent); background: transparent; }
+    .brand h1 { font-size: 18px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+    .brand p { margin: 1px 0 0; font-size: 13px; color: var(--muted); }
+
+    .steps { display: flex; gap: 6px; margin-top: 18px; }
+    .steps span { flex: 1; height: 3px; border-radius: 3px; background: var(--line); transition: background .25s; }
+    .steps span.on { background: var(--accent); }
+
+    main { padding: 16px; display: grid; gap: 14px; }
+
+    .card {
+      background: var(--surface); border-radius: var(--radius);
+      padding: 16px; border: 1px solid var(--line);
+    }
+    .card-title {
+      display: flex; align-items: baseline; justify-content: space-between;
+      font-size: 13px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .04em; color: var(--muted); margin: 0 0 12px;
+    }
+    .card-title em { font-style: normal; font-weight: 500; text-transform: none; letter-spacing: 0; }
+
+    /* Anonymity switch */
+    .identity { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; background: var(--bg); border-radius: 12px; }
+    .identity button {
+      border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 600; font-size: 14px;
+      padding: 10px 8px; border-radius: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px;
+      transition: background .2s, color .2s;
+    }
+    .identity button.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(15,23,42,.12); }
+    .identity-hint { font-size: 13px; color: var(--muted); margin: 12px 2px 0; display: flex; gap: 8px; align-items: flex-start; }
+    .identity-hint svg { flex: none; margin-top: 2px; }
+    .name-wrap { display: none; margin-top: 12px; }
+    .name-wrap.show { display: block; }
+    .warn {
+      font-size: 12.5px; color: #b45309; background: color-mix(in srgb, #f59e0b 12%, transparent);
+      border-radius: 10px; padding: 8px 10px; margin-top: 8px;
+    }
+
+    /* Categories */
+    .cats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .cat {
+      display: flex; align-items: center; gap: 10px; text-align: left;
+      border: 1px solid var(--line); background: var(--surface); color: var(--text);
+      font: inherit; font-size: 14px; font-weight: 500; padding: 11px 12px; border-radius: 12px; cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .cat .ic { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; background: var(--bg); color: var(--muted); flex: none; transition: background .15s, color .15s; }
+    .cat.on { border-color: var(--accent); background: var(--accent-soft); }
+    .cat.on .ic { background: var(--accent); color: var(--accent-text); }
+    .cat:last-child:nth-child(odd) { grid-column: span 2; }
+
+    /* Inputs */
+    .field + .field { margin-top: 12px; }
+    .field label { display: block; font-size: 13px; font-weight: 500; margin: 0 0 6px; }
+    .field label span { color: var(--muted); font-weight: 400; }
     input, textarea {
-      width: 100%; background: var(--card); color: var(--text); border: none;
-      border-radius: 12px; padding: 12px; font: inherit; outline: none;
+      width: 100%; background: var(--bg); color: var(--text);
+      border: 1px solid transparent; border-radius: 12px; padding: 12px 14px;
+      font: inherit; outline: none; transition: border-color .15s, background .15s;
     }
-    textarea { min-height: 170px; resize: vertical; }
-    .counter { text-align: right; font-size: 12px; color: var(--hint); margin-top: 4px; }
-    .err { color: #e53935; font-size: 13px; min-height: 18px; margin-top: 8px; }
-    .done { text-align: center; padding-top: 60px; display: none; }
-    .done .big { font-size: 56px; }
-    .done p { color: var(--hint); }
+    input:focus, textarea:focus { border-color: var(--accent); background: var(--surface); }
+    input::placeholder, textarea::placeholder { color: var(--muted); opacity: .8; }
+    textarea { min-height: 150px; resize: none; line-height: 1.55; }
+    .meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .err { color: var(--danger); font-size: 13px; min-height: 18px; }
+
+    .fallback-btn {
+      display: none; width: 100%; border: 0; border-radius: 12px; padding: 14px;
+      background: var(--accent); color: var(--accent-text); font: inherit; font-weight: 600; cursor: pointer;
+    }
+
+    .foot { text-align: center; font-size: 12px; color: var(--muted); padding: 4px 16px 0; display: flex; gap: 6px; justify-content: center; align-items: center; }
+
+    /* Success */
+    .done { display: none; padding: 56px 24px; text-align: center; }
+    .done .badge {
+      width: 72px; height: 72px; border-radius: 50%; margin: 0 auto 18px;
+      background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok);
+      display: grid; place-items: center; animation: pop .35s ease-out;
+    }
+    .done h2 { font-size: 20px; margin: 0 0 6px; }
+    .done p { color: var(--muted); margin: 0 auto; max-width: 300px; }
+    .ticket {
+      display: inline-block; margin-top: 18px; padding: 10px 16px; border-radius: 12px;
+      background: var(--surface); border: 1px solid var(--line); font-weight: 600; letter-spacing: .06em;
+    }
+    .ticket small { display: block; font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: .02em; }
+    @keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   </style>
 </head>
 <body>
   <div id="form">
-    <h1>✍️ Anonim shikoyat</h1>
-    <div class="note">
-      🔒 <b>Shaxsingiz sir saqlanadi.</b> Ismingiz, username yoki Telegram ID'ingiz
-      rahbariyatga yuborilmaydi va hech qayerda saqlanmaydi. Matnda o'zingizni
-      tanitib qo'yadigan tafsilotlar yozmaslikka harakat qiling.
-    </div>
+    <header class="hero">
+      <div class="brand">
+        <div class="brand-mark">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
+        <div>
+          <h1>Murojaat yuborish</h1>
+          <p>Shikoyat va takliflar rahbariyatga yetkaziladi</p>
+        </div>
+      </div>
+      <div class="steps"><span class="on" id="s1"></span><span id="s2"></span><span id="s3"></span></div>
+    </header>
 
-    <label>Turkum</label>
-    <div class="chips" id="chips">
-      <button class="chip active" data-v="salary">💰 Ish haqi</button>
-      <button class="chip" data-v="management">👔 Rahbariyat</button>
-      <button class="chip" data-v="conditions">🏭 Ish sharoiti</button>
-      <button class="chip" data-v="colleagues">👥 Hamkasblar</button>
-      <button class="chip" data-v="safety">⚠️ Xavfsizlik</button>
-      <button class="chip" data-v="suggestion">💡 Taklif</button>
-      <button class="chip" data-v="other">📌 Boshqa</button>
-    </div>
+    <main>
+      <!-- 1. Identity -->
+      <section class="card">
+        <div class="card-title">Yuboruvchi</div>
+        <div class="identity">
+          <button type="button" class="on" data-mode="anon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Anonim
+          </button>
+          <button type="button" data-mode="named">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            Ism bilan
+          </button>
+        </div>
+        <p class="identity-hint" id="idHint">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <span>Ismingiz, username yoki Telegram ID'ingiz yuborilmaydi va hech qayerda saqlanmaydi.</span>
+        </p>
+        <div class="name-wrap" id="nameWrap">
+          <div class="field">
+            <label for="name">Ism va familiya</label>
+            <input id="name" maxlength="60" autocomplete="name" placeholder="Masalan: Aliyev Jasur" />
+          </div>
+          <div class="warn">Ism ko'rsatilsa, murojaat anonim bo'lmaydi — rahbariyat kim yozganini ko'radi.</div>
+        </div>
+      </section>
 
-    <label for="branch">Bo'lim yoki filial <span style="color:var(--hint);font-weight:400">(ixtiyoriy)</span></label>
-    <input id="branch" maxlength="100" placeholder="Masalan: ombor, savdo bo'limi" />
+      <!-- 2. Category -->
+      <section class="card">
+        <div class="card-title">Mavzu</div>
+        <div class="cats" id="cats">
+          <button type="button" class="cat on" data-v="salary"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg></span>Ish haqi</button>
+          <button type="button" class="cat" data-v="management"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></span>Rahbariyat</button>
+          <button type="button" class="cat" data-v="conditions"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/></svg></span>Ish sharoiti</button>
+          <button type="button" class="cat" data-v="colleagues"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"/></svg></span>Hamkasblar</button>
+          <button type="button" class="cat" data-v="safety"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></span>Xavfsizlik</button>
+          <button type="button" class="cat" data-v="suggestion"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg></span>Taklif</button>
+          <button type="button" class="cat" data-v="other"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg></span>Boshqa</button>
+        </div>
+      </section>
 
-    <label for="text">Shikoyatingiz</label>
-    <textarea id="text" maxlength="3000" placeholder="Muammoni batafsil yozing..."></textarea>
-    <div class="counter"><span id="count">0</span>/3000</div>
-    <div class="err" id="err"></div>
+      <!-- 3. Message -->
+      <section class="card">
+        <div class="card-title">Murojaat matni</div>
+        <div class="field">
+          <label for="branch">Bo'lim yoki filial <span>(ixtiyoriy)</span></label>
+          <input id="branch" maxlength="100" placeholder="Masalan: ombor, savdo bo'limi" />
+        </div>
+        <div class="field">
+          <label for="text">Batafsil yozing</label>
+          <textarea id="text" maxlength="3000" placeholder="Nima bo'ldi, qachon va qayerda? Muammoni aniq tasvirlab bering."></textarea>
+          <div class="meta"><span>Kamida 10 belgi</span><span><span id="count">0</span> / 3000</span></div>
+        </div>
+        <div class="err" id="err"></div>
+        <button class="fallback-btn" id="fallbackBtn" type="button">Yuborish</button>
+      </section>
+
+      <div class="foot">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Murojaatlar faqat rahbariyatga yetkaziladi
+      </div>
+    </main>
   </div>
 
   <div class="done" id="done">
-    <div class="big">✅</div>
-    <h2>Shikoyatingiz qabul qilindi</h2>
-    <p>Raqam: <b id="ticket"></b><br />Rahmat! Shaxsingiz anonim qoldi.</p>
+    <div class="badge">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+    </div>
+    <h2>Murojaatingiz qabul qilindi</h2>
+    <p id="doneText">Rahmat! Murojaatingiz rahbariyatga anonim tarzda yetkaziladi.</p>
+    <div class="ticket"><small>Murojaat raqami</small><span id="ticket"></span></div>
   </div>
 
   <script>
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
+    const tg = window.Telegram && window.Telegram.WebApp;
+    const inTelegram = !!(tg && tg.initData);
+    if (tg) { tg.ready(); tg.expand(); try { tg.setHeaderColor('bg_color'); } catch (e) {} }
+    const haptic = (t) => { try { tg.HapticFeedback.selectionChanged(); } catch (e) {} };
 
-    let category = 'salary';
-    document.querySelectorAll('.chip').forEach((c) =>
-      c.addEventListener('click', () => {
-        document.querySelectorAll('.chip').forEach((x) => x.classList.remove('active'));
-        c.classList.add('active');
-        category = c.dataset.v;
-        tg.HapticFeedback && tg.HapticFeedback.selectionChanged();
+    const $ = (id) => document.getElementById(id);
+    const state = { mode: 'anon', category: 'salary' };
+
+    // Identity toggle
+    document.querySelectorAll('.identity button').forEach((b) =>
+      b.addEventListener('click', () => {
+        document.querySelectorAll('.identity button').forEach((x) => x.classList.remove('on'));
+        b.classList.add('on');
+        state.mode = b.dataset.mode;
+        const named = state.mode === 'named';
+        $('nameWrap').classList.toggle('show', named);
+        $('idHint').style.display = named ? 'none' : 'flex';
+        if (named) setTimeout(() => $('name').focus(), 50);
+        haptic(); updateSteps();
       })
     );
 
-    const text = document.getElementById('text');
-    const err = document.getElementById('err');
+    // Categories
+    document.querySelectorAll('.cat').forEach((c) =>
+      c.addEventListener('click', () => {
+        document.querySelectorAll('.cat').forEach((x) => x.classList.remove('on'));
+        c.classList.add('on');
+        state.category = c.dataset.v;
+        haptic(); updateSteps();
+      })
+    );
+
+    // Text
+    const text = $('text');
     text.addEventListener('input', () => {
-      document.getElementById('count').textContent = text.value.length;
-      err.textContent = '';
+      $('count').textContent = text.value.length;
+      $('err').textContent = '';
+      updateSteps();
     });
 
-    tg.MainButton.setText('Yuborish');
-    tg.MainButton.show();
+    let touched = { cat: false };
+    document.querySelectorAll('.cat').forEach((c) => c.addEventListener('click', () => (touched.cat = true)));
+    function updateSteps() {
+      $('s2').classList.toggle('on', touched.cat || text.value.length > 0);
+      $('s3').classList.toggle('on', text.value.trim().length >= 10);
+    }
 
-    tg.MainButton.onClick(async () => {
+    async function submit() {
       const body = text.value.trim();
-      if (body.length < 10) {
-        err.textContent = "Shikoyat kamida 10 ta belgidan iborat bo'lsin.";
+      const name = $('name').value.trim();
+      if (state.mode === 'named' && name.length < 2) {
+        $('err').textContent = "Ismingizni kiriting yoki «Anonim» rejimini tanlang.";
+        $('name').focus();
         return;
       }
-      tg.MainButton.showProgress();
-      tg.MainButton.disable();
+      if (body.length < 10) {
+        $('err').textContent = "Murojaat kamida 10 ta belgidan iborat bo'lsin.";
+        text.focus();
+        return;
+      }
+      setLoading(true);
       try {
         const r = await fetch('/api/complaint', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            initData: tg.initData,
-            category,
-            branch: document.getElementById('branch').value.trim(),
+            initData: tg ? tg.initData : '',
+            category: state.category,
+            branch: $('branch').value.trim(),
+            name: state.mode === 'named' ? name : '',
             text: body,
           }),
         });
         const data = await r.json();
-        if (!data.ok) throw new Error(data.error || 'Xatolik');
-        document.getElementById('form').style.display = 'none';
-        document.getElementById('done').style.display = 'block';
-        document.getElementById('ticket').textContent = '#' + data.ticket;
-        tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success');
-        tg.MainButton.setText('Yopish');
-        tg.MainButton.offClick();
-        tg.MainButton.onClick(() => tg.close());
+        if (!data.ok) throw new Error(data.error || 'Xatolik yuz berdi');
+        showDone(data.ticket);
       } catch (e) {
-        err.textContent = e.message || "Tarmoq xatosi. Qayta urinib ko'ring.";
+        $('err').textContent = e.message || "Tarmoq xatosi. Qayta urinib ko'ring.";
+        try { tg.HapticFeedback.notificationOccurred('error'); } catch (_) {}
       } finally {
-        tg.MainButton.hideProgress();
-        tg.MainButton.enable();
+        setLoading(false);
       }
-    });
+    }
+
+    function setLoading(on) {
+      if (inTelegram) {
+        on ? (tg.MainButton.showProgress(), tg.MainButton.disable())
+           : (tg.MainButton.hideProgress(), tg.MainButton.enable());
+      }
+      $('fallbackBtn').disabled = on;
+      $('fallbackBtn').textContent = on ? 'Yuborilmoqda…' : 'Yuborish';
+    }
+
+    function showDone(ticket) {
+      $('form').style.display = 'none';
+      $('done').style.display = 'block';
+      $('ticket').textContent = '#' + ticket;
+      if (state.mode === 'named') $('doneText').textContent = 'Rahmat! Murojaatingiz ismingiz bilan rahbariyatga yetkaziladi.';
+      window.scrollTo(0, 0);
+      try { tg.HapticFeedback.notificationOccurred('success'); } catch (_) {}
+      if (inTelegram) {
+        tg.MainButton.setText('Yopish');
+        tg.MainButton.offClick(submit);
+        tg.MainButton.onClick(() => tg.close());
+      }
+    }
+
+    if (inTelegram) {
+      tg.MainButton.setText('Murojaatni yuborish');
+      tg.MainButton.show();
+      tg.MainButton.onClick(submit);
+    } else {
+      $('fallbackBtn').style.display = 'block';
+      $('fallbackBtn').addEventListener('click', submit);
+    }
   </script>
 </body>
 </html>

@@ -27,7 +27,7 @@ function verifyInitData(initData) {
 // ID tasodifiy tuz bilan xeshlanadi; tuz har yangi instansiyada yangilanadi.
 const SALT = crypto.randomBytes(32);
 const lastSent = new Map();
-const COOLDOWN_MS = 0;
+const COOLDOWN_MS = 1 * 60 * 1000; // 1 daqiqada 1 ta murojaat
 
 function rateKey(initData) {
   try {
@@ -56,14 +56,14 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ ok: false });
 
-  const { initData, category, branch, text } = req.body || {};
+  const { initData, category, branch, name, text } = req.body || {};
 
   if (!verifyInitData(initData)) {
     return res.status(401).json({ ok: false, error: 'Iltimos, ilovani bot orqali oching.' });
   }
   const body = String(text || '').trim();
   if (body.length < 10) {
-    return res.status(400).json({ ok: false, error: 'Shikoyat kamida 10 ta belgidan iborat bo\'lsin.' });
+    return res.status(400).json({ ok: false, error: 'Murojaat kamida 10 ta belgidan iborat bo\'lsin.' });
   }
   if (body.length > 3000) {
     return res.status(400).json({ ok: false, error: 'Matn juda uzun (maks. 3000 belgi).' });
@@ -73,16 +73,20 @@ module.exports = async (req, res) => {
   const now = Date.now();
   for (const [k, t] of lastSent) if (now - t > COOLDOWN_MS) lastSent.delete(k);
   if (key && lastSent.has(key)) {
-    return res.status(429).json({ ok: false, error: 'Iltimos, keyingi shikoyatni biroz keyinroq yuboring.' });
+    return res.status(429).json({ ok: false, error: 'Keyingi murojaatni 1 daqiqadan so\'ng yuborishingiz mumkin.' });
   }
   if (key) lastSent.set(key, now);
 
+  const author = String(name || '').trim().slice(0, 60);
   const ticket = crypto.randomBytes(3).toString('hex').toUpperCase();
   const msg =
-    `📩 <b>Yangi anonim shikoyat</b> #${ticket}\n\n` +
-    `<b>Turkum:</b> ${CATEGORIES[category] || CATEGORIES.other}\n` +
+    `📩 <b>Yangi murojaat</b> · #${ticket}\n` +
+    `━━━━━━━━━━━━━━━\n` +
+    `<b>Yuboruvchi:</b> ${author ? '👤 ' + escapeHtml(author) : '🔒 Anonim'}\n` +
+    `<b>Mavzu:</b> ${CATEGORIES[category] || CATEGORIES.other}\n` +
     (branch ? `<b>Bo'lim/filial:</b> ${escapeHtml(String(branch).slice(0, 100))}\n` : '') +
-    `\n${escapeHtml(body)}`;
+    `━━━━━━━━━━━━━━━\n\n` +
+    `${escapeHtml(body)}`;
 
   // Xodimga darhol javob beramiz, xabarni esa 0–20 soniya tasodifiy kechikish bilan
   // yuboramiz (yuborilgan vaqtga qarab kimligini taxmin qilishni qiyinlashtiradi).

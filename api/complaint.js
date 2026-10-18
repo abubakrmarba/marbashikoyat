@@ -27,7 +27,7 @@ function verifyInitData(initData) {
 // ID tasodifiy tuz bilan xeshlanadi; tuz har yangi instansiyada yangilanadi.
 const SALT = crypto.randomBytes(32);
 const lastSent = new Map();
-const COOLDOWN_MS = 10 * 60 * 1000;
+const COOLDOWN_MS = 0;
 
 function rateKey(initData) {
   try {

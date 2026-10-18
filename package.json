@@ -1,0 +1,13 @@
+{
+  "name": "shikoyat-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Xodimlar uchun anonim shikoyat boti (Telegram + Mini App) — Vercel",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@vercel/functions": "^1.5.0",
+    "telegraf": "^4.16.3"
+  }
+}
